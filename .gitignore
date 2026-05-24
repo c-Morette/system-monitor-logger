@@ -1,0 +1,18 @@
+# Build
+bin/
+obj/
+
+# Logs gerados em execução
+logs/*
+!logs/.gitkeep
+
+# Ferramentas de terceiros (downloads/extrações locais)
+tools/
+
+# IDEs
+.vs/
+.idea/
+*.user
+
+# Claude Code (configurações locais do editor)
+.claude/
