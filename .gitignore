@@ -13,12 +13,12 @@ src/SystemMonitorLogger/bin/Release/net8.0/*
 src/SystemMonitorLogger/bin/Release/net8.0/win-x64/*
 !src/SystemMonitorLogger/bin/Release/net8.0/win-x64/publish/
 src/SystemMonitorLogger/bin/Release/net8.0/win-x64/publish/*
-!src/SystemMonitorLogger/bin/Release/net8.0/win-x64/publish/SystemMonitorLogger.exe
+!src/SystemMonitorLogger/bin/Release/net8.0/win-x64/publish/SystemMonitorLogger-win-x64.exe
 !src/SystemMonitorLogger/bin/Release/net8.0/linux-x64/
 src/SystemMonitorLogger/bin/Release/net8.0/linux-x64/*
 !src/SystemMonitorLogger/bin/Release/net8.0/linux-x64/publish/
 src/SystemMonitorLogger/bin/Release/net8.0/linux-x64/publish/*
-!src/SystemMonitorLogger/bin/Release/net8.0/linux-x64/publish/SystemMonitorLogger
+!src/SystemMonitorLogger/bin/Release/net8.0/linux-x64/publish/SystemMonitorLogger-linux-x64
 !src/SystemMonitorLogger/bin/Release/net8.0/linux-x64/publish/README-LINUX.md
 
 # Logs gerados em execução

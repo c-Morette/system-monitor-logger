@@ -21,22 +21,54 @@ Ferramenta de terminal em C#/.NET para **monitorar CPU, memória, disco e proces
 
 ---
 
+## Download
+
+Baixe a versão mais recente em:
+
+[Releases](https://github.com/c-Morette/system-monitor-logger/releases/latest)
+
+| Sistema | Arquivo |
+|---------|---------|
+| Windows x64 | `SystemMonitorLogger-win-x64.exe` |
+| Linux x64 | `SystemMonitorLogger-linux-x64` |
+
+Para Linux, leia também o arquivo `README-LINUX.md` disponível na mesma release.
+
+---
+
 ## Uso rápido
 
 Sem parâmetros, abre um assistente interativo no terminal:
 
+**Windows:**
+
+```powershell
+.\SystemMonitorLogger-win-x64.exe
+```
+
+**Linux:**
+
 ```bash
-SystemMonitorLogger
+chmod +x SystemMonitorLogger-linux-x64
+./SystemMonitorLogger-linux-x64
 ```
 
 O assistente pergunta duração, intervalo, verificação SMART e modo de tela.
 
 Com parâmetros, inicia direto:
 
+```powershell
+.\SystemMonitorLogger-win-x64.exe --duration 30m
+.\SystemMonitorLogger-win-x64.exe --duration 1h30m --interval 5
+.\SystemMonitorLogger-win-x64.exe --duration 1h --no-smart --simple
+```
+
+No Linux, use o mesmo padrão trocando pelo executável Linux:
+
 ```bash
-SystemMonitorLogger --duration 30m
-SystemMonitorLogger --duration 1h30m --interval 5
-SystemMonitorLogger --duration 1h --no-smart --simple
+./SystemMonitorLogger-linux-x64 --duration 30m
+./SystemMonitorLogger-linux-x64 --duration 1h30m --interval 5
+./SystemMonitorLogger-linux-x64 --duration 1h --no-smart --simple
 ```
 
 ---
