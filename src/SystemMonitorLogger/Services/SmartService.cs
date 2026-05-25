@@ -48,6 +48,32 @@ public sealed class SmartService(string runDirectory)
     public Task WriteSmartFileAsync(SmartResult result, CancellationToken cancellationToken)
     {
         var builder = new StringBuilder();
+        builder.AppendLine("Validacao rapida SMART:");
+        builder.AppendLine($"- Saude fisica: {GetSmartHealthLevel(result)}");
+        builder.AppendLine($"- Status informado: {result.Status}");
+
+        if (!result.Available)
+        {
+            builder.AppendLine("- Observacao: SMART nao foi validado completamente. Execute como administrador/root ou confirme compatibilidade do disco.");
+        }
+
+        if (result.ReallocatedSectors is not null)
+        {
+            builder.AppendLine($"- Setores realocados: {result.ReallocatedSectors} ({ClassifySectorCount(result.ReallocatedSectors.Value)})");
+        }
+
+        if (result.PendingSectors is not null)
+        {
+            builder.AppendLine($"- Setores pendentes: {result.PendingSectors} ({ClassifySectorCount(result.PendingSectors.Value)})");
+        }
+
+        if (result.TemperatureCelsius is not null)
+        {
+            builder.AppendLine($"- Temperatura: {result.TemperatureCelsius} C ({ClassifyTemperature(result.TemperatureCelsius.Value)})");
+        }
+
+        builder.AppendLine();
+        builder.AppendLine("Resumo tecnico:");
         builder.AppendLine($"Status: {result.Status}");
 
         if (!string.IsNullOrWhiteSpace(result.Device))
@@ -76,9 +102,45 @@ public sealed class SmartService(string runDirectory)
         }
 
         builder.AppendLine();
+        builder.AppendLine("Saida bruta do smartctl:");
         builder.AppendLine(result.Details);
 
         return File.WriteAllTextAsync(Path.Combine(runDirectory, "smart.txt"), builder.ToString(), Encoding.UTF8, cancellationToken);
+    }
+
+    private static string GetSmartHealthLevel(SmartResult result)
+    {
+        if (result.SmartPassed == false || result.Status.Contains("failed", StringComparison.OrdinalIgnoreCase))
+        {
+            return "CRITICO";
+        }
+
+        if (!result.Available)
+        {
+            return "INCOMPLETO";
+        }
+
+        if (result.PendingSectors > 0 || result.ReallocatedSectors > 50 || result.TemperatureCelsius > 55)
+        {
+            return "ATENCAO";
+        }
+
+        return "OK";
+    }
+
+    private static string ClassifySectorCount(long value)
+    {
+        return value == 0 ? "OK" : "ATENCAO";
+    }
+
+    private static string ClassifyTemperature(int value)
+    {
+        return value switch
+        {
+            >= 60 => "CRITICO",
+            >= 50 => "ATENCAO",
+            _ => "OK"
+        };
     }
 
     private static async Task<SmartctlPath> ResolveSmartctlAsync(CancellationToken cancellationToken)

@@ -39,7 +39,7 @@ public sealed class ReportService
         builder.AppendLine("Resumo:");
         AppendMetric(builder, "CPU", samples.Average(s => s.CpuPercent), samples.Max(s => s.CpuPercent));
         AppendMetric(builder, "RAM", samples.Average(s => s.MemoryUsedPercent), samples.Max(s => s.MemoryUsedPercent));
-        AppendMetric(builder, "Disco", samples.Average(s => s.DiskUsagePercent), samples.Max(s => s.DiskUsagePercent));
+        AppendMetric(builder, "Espaco em disco", samples.Average(s => s.DiskUsagePercent), samples.Max(s => s.DiskUsagePercent));
         builder.AppendLine($"Leitura de disco media: {samples.Average(s => s.DiskReadMbPerSecond):0.##} MB/s");
         builder.AppendLine($"Leitura de disco pico: {samples.Max(s => s.DiskReadMbPerSecond):0.##} MB/s");
         builder.AppendLine($"Escrita de disco media: {samples.Average(s => s.DiskWriteMbPerSecond):0.##} MB/s");
@@ -48,6 +48,7 @@ public sealed class ReportService
         builder.AppendLine($"Espaco livre em disco: {samples[^1].DiskFreeMb / 1024d:0.##} GB de {samples[^1].DiskTotalMb / 1024d:0.##} GB");
         builder.AppendLine();
 
+        AppendDiskValidation(builder, summary);
         AppendProcessSummary(builder, summary.ProcessSamples);
         AppendSmartSummary(builder, summary.Smart);
 
@@ -115,6 +116,9 @@ public sealed class ReportService
         var writeAverage = samples.Average(s => s.DiskWriteMbPerSecond);
         var writePeak = samples.Max(s => s.DiskWriteMbPerSecond);
         var diskHighSamples = samples.Count(s => s.DiskUsagePercent >= 95);
+        var diskIoAverage = readAverage + writeAverage;
+        var diskIoPeak = samples.Max(s => s.DiskReadMbPerSecond + s.DiskWriteMbPerSecond);
+        var diskIoHighSamples = samples.Count(s => s.DiskReadMbPerSecond + s.DiskWriteMbPerSecond >= 50);
         var freePercent = samples[^1].DiskTotalMb <= 0 ? 100 : samples[^1].DiskFreeMb * 100d / samples[^1].DiskTotalMb;
 
         var cpuScore = Score(cpuAverage, cpuHighSamples, samples.Count, 80, 90);
@@ -130,7 +134,7 @@ public sealed class ReportService
             diskScore += 1.5;
         }
 
-        if (readAverage + writeAverage >= 50 || readPeak + writePeak >= 150)
+        if (diskIoAverage >= 50 || diskIoPeak >= 150 || diskIoHighSamples >= Math.Max(1, samples.Count * 0.2))
         {
             diskScore += 1.5;
         }
@@ -187,8 +191,8 @@ public sealed class ReportService
         {
             $"CPU media {cpuAverage:0.##}% e pico {cpuPeak:0.##}%.",
             $"RAM media {memoryAverage:0.##}% e pico {memoryPeak:0.##}%.",
-            $"Disco usado medio {diskAverage:0.##}% e pico {diskPeak:0.##}%.",
-            $"I/O de disco: leitura media {readAverage:0.##} MB/s, pico {readPeak:0.##} MB/s; escrita media {writeAverage:0.##} MB/s, pico {writePeak:0.##} MB/s.",
+            $"Espaco em disco usado medio {diskAverage:0.##}% e pico {diskPeak:0.##}%.",
+            $"Atividade de disco: leitura media {readAverage:0.##} MB/s, pico {readPeak:0.##} MB/s; escrita media {writeAverage:0.##} MB/s, pico {writePeak:0.##} MB/s.",
             $"Espaco livre em disco {freePercent:0.##}%."
         };
 
@@ -206,6 +210,43 @@ public sealed class ReportService
         }
 
         return evidence;
+    }
+
+    private static void AppendDiskValidation(StringBuilder builder, MonitorSummary summary)
+    {
+        var samples = summary.Samples;
+        if (samples.Count == 0)
+        {
+            return;
+        }
+
+        var last = samples[^1];
+        var usedPeak = samples.Max(s => s.DiskUsagePercent);
+        var freePercent = last.DiskTotalMb <= 0 ? 100 : last.DiskFreeMb * 100d / last.DiskTotalMb;
+        var readAverage = samples.Average(s => s.DiskReadMbPerSecond);
+        var writeAverage = samples.Average(s => s.DiskWriteMbPerSecond);
+        var ioAverage = readAverage + writeAverage;
+        var ioPeak = samples.Max(s => s.DiskReadMbPerSecond + s.DiskWriteMbPerSecond);
+        var highIoSamples = samples.Count(s => s.DiskReadMbPerSecond + s.DiskWriteMbPerSecond >= 50);
+        var highIoPercent = samples.Count == 0 ? 0 : highIoSamples * 100d / samples.Count;
+
+        var spaceStatus = freePercent < 5 || usedPeak >= 98
+            ? "CRITICO"
+            : freePercent < 15 || usedPeak >= 90
+                ? "ATENCAO"
+                : "OK";
+        var ioStatus = ioAverage >= 50 || ioPeak >= 150 || highIoPercent >= 20
+            ? "ALTO"
+            : ioAverage >= 20 || ioPeak >= 80 || highIoPercent >= 10
+                ? "MODERADO"
+                : "NORMAL";
+
+        builder.AppendLine("Validacao rapida do disco:");
+        builder.AppendLine($"- Espaco ocupado: {spaceStatus} - pico {usedPeak:0.##}% usado, {freePercent:0.##}% livre.");
+        builder.AppendLine($"- Atividade de disco: {ioStatus} - media {ioAverage:0.##} MB/s, pico {ioPeak:0.##} MB/s.");
+        builder.AppendLine($"- Amostras com I/O alto: {highIoSamples} de {samples.Count} ({highIoPercent:0.##}%).");
+        builder.AppendLine("Observacao: espaco ocupado e atividade de disco sao coisas diferentes; o CSV guarda ambos separadamente.");
+        builder.AppendLine();
     }
 
     private static List<string> BuildSmartEvidence(SmartResult smart)

@@ -2,6 +2,25 @@
 bin/
 obj/
 
+# Executaveis finais liberados para download direto pelo GitHub
+!src/SystemMonitorLogger/bin/
+src/SystemMonitorLogger/bin/*
+!src/SystemMonitorLogger/bin/Release/
+src/SystemMonitorLogger/bin/Release/*
+!src/SystemMonitorLogger/bin/Release/net8.0/
+src/SystemMonitorLogger/bin/Release/net8.0/*
+!src/SystemMonitorLogger/bin/Release/net8.0/win-x64/
+src/SystemMonitorLogger/bin/Release/net8.0/win-x64/*
+!src/SystemMonitorLogger/bin/Release/net8.0/win-x64/publish/
+src/SystemMonitorLogger/bin/Release/net8.0/win-x64/publish/*
+!src/SystemMonitorLogger/bin/Release/net8.0/win-x64/publish/SystemMonitorLogger.exe
+!src/SystemMonitorLogger/bin/Release/net8.0/linux-x64/
+src/SystemMonitorLogger/bin/Release/net8.0/linux-x64/*
+!src/SystemMonitorLogger/bin/Release/net8.0/linux-x64/publish/
+src/SystemMonitorLogger/bin/Release/net8.0/linux-x64/publish/*
+!src/SystemMonitorLogger/bin/Release/net8.0/linux-x64/publish/SystemMonitorLogger
+!src/SystemMonitorLogger/bin/Release/net8.0/linux-x64/publish/README-LINUX.md
+
 # Logs gerados em execução
 logs/*
 !logs/.gitkeep
