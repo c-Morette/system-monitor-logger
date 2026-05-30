@@ -1,0 +1,24 @@
+# Imagem unica de build para TODOS os alvos, a partir do Windows:
+#   linux-x64, linux-x86 (nativo g++ / -m32)
+#   win-x64,   win-x86   (cross-compile com MinGW-w64)
+#
+# Compila DENTRO do container; os binarios saem para dist/ (pasta montada).
+# Isolado: nao toca em outros containers (ex.: Postgres trustban-pg-dev).
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        g++ \
+        gcc-multilib \
+        g++-multilib \
+        mingw-w64 \
+        cmake \
+        make \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /work
+
+# Recebe o alvo: linux-x64 (padrao) | linux-x86 | win-x64 | win-x86
+ENTRYPOINT ["/work/docker/build.sh"]
+CMD ["linux-x64"]

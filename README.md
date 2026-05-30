@@ -9,6 +9,59 @@ Ferramenta de terminal em C#/.NET para **monitorar CPU, memória, disco e proces
 
 ---
 
+## 🆕 Versão C++ (Linux 32/64 e Windows 32/64) — v2.0.0
+
+A pasta [`SystemMonitorLoggerCpp/`](SystemMonitorLoggerCpp/) traz uma **reescrita completa em
+C++17**, criada para rodar em **Linux 32-bit (Lubuntu antigo)** — algo que o .NET **não** suporta —
+mantendo também Linux 64-bit e Windows 32/64-bit. Mesma funcionalidade (CPU, RAM, disco, I/O,
+processos e SMART), mesmos arquivos de saída.
+
+### Como funciona agora
+
+- **4 binários, um por sistema**, cada um **autossuficiente** (linkagem 100% estática — sem
+  instalar nada, sem DLL, sem .NET, sem problema de versão de glibc em Lubuntu antigo).
+- **Assistente interativo:** ao abrir **sem argumentos**, ele **pergunta** duração, intervalo,
+  SMART e modo de tela — não precisa decorar comando nenhum. Com argumentos, inicia direto.
+- **Tela ao vivo** com barras de CPU/RAM/disco e top processos por CPU e por RAM, atualizando
+  sem piscar (e compatível com o console do Windows 7).
+
+| Sistema | Arquivo (na release) |
+|---------|----------------------|
+| Linux 32-bit (Lubuntu antigo) | `SystemMonitorLogger-linux-x86` |
+| Linux 64-bit | `SystemMonitorLogger-linux-x64` |
+| Windows 32-bit | `SystemMonitorLogger-win-x86.exe` |
+| Windows 64-bit | `SystemMonitorLogger-win-x64.exe` |
+
+### Uso rápido
+
+```bash
+# Linux: 1 arquivo, dá permissão e roda (abre o assistente)
+chmod +x SystemMonitorLogger-linux-x86
+./SystemMonitorLogger-linux-x86
+
+# Ou direto, sem assistente:
+./SystemMonitorLogger-linux-x86 --duration 30m --interval 5 --simple
+```
+
+No Windows é só dar duplo-clique no `.exe`.
+
+### Como é compilado
+
+Os 4 binários são gerados **a partir de uma máquina Windows usando apenas Docker** (sem instalar
+compiladores): `g++`/`-m32` para Linux e **MinGW-w64** para Windows, tudo num container. Basta:
+
+```powershell
+cd SystemMonitorLoggerCpp
+.\build_all.ps1
+```
+
+Detalhes em [`SystemMonitorLoggerCpp/README.md`](SystemMonitorLoggerCpp/README.md) e
+[`SystemMonitorLoggerCpp/README-LINUX.md`](SystemMonitorLoggerCpp/README-LINUX.md).
+
+> A versão **C#** abaixo continua disponível como referência para Windows/Linux 64-bit.
+
+---
+
 ## Funcionalidades
 
 - Monitora **CPU, RAM e disco** com amostras a cada 1 segundo
