@@ -212,6 +212,15 @@ std::vector<ProcessSample> WindowsProcessProvider::CollectAll()
             double memoryMb = 0.0;
             std::string displayName = processName;
 
+            // Nome amigavel: resolve uma vez por PID e reaproveita (a leitura de
+            // version info e' a parte cara; nao faz sentido refazer a cada tick).
+            const auto cachedName = m_displayCache.find(pid);
+            const bool hasCachedName = cachedName != m_displayCache.end();
+            if (hasCachedName)
+            {
+                displayName = cachedName->second;
+            }
+
             if (process != nullptr)
             {
                 FILETIME creation, exit, kernel, user;
@@ -226,16 +235,17 @@ std::vector<ProcessSample> WindowsProcessProvider::CollectAll()
                     memoryMb = static_cast<double>(counters.WorkingSetSize) / 1024.0 / 1024.0;
                 }
 
-                displayName = ResolveDisplayName(process, processName);
+                if (!hasCachedName)
+                {
+                    displayName = ResolveDisplayName(process, processName);
+                    m_displayCache[pid] = displayName;
+                }
                 CloseHandle(process);
             }
-            else
+            else if (!hasCachedName)
             {
                 const std::string mapped = MapKnownProcessName(processName);
-                if (!mapped.empty())
-                {
-                    displayName = mapped;
-                }
+                displayName = mapped.empty() ? processName : mapped;
             }
 
             current[pid] = CpuSnapshot{now, totalTicks};
@@ -269,6 +279,21 @@ std::vector<ProcessSample> WindowsProcessProvider::CollectAll()
     }
 
     CloseHandle(snapshot);
+
+    // Remove do cache de nomes os PIDs que nao existem mais (evita crescer
+    // indefinidamente e lida com reuso de PID).
+    for (auto it = m_displayCache.begin(); it != m_displayCache.end();)
+    {
+        if (current.count(it->first) == 0)
+        {
+            it = m_displayCache.erase(it);
+        }
+        else
+        {
+            ++it;
+        }
+    }
+
     m_previous = std::move(current);
     return result;
 }

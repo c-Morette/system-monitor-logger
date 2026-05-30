@@ -68,7 +68,6 @@ void MonitorService::Run(MonitorSummary& summary)
 {
     const std::time_t start = std::time(nullptr);
     const long long intervalMs = static_cast<long long>(m_settings.intervalSeconds) * 1000;
-    int secondsSinceProcs = 999; // forca coletar processos na primeira amostra
     std::vector<ProcessSample> lastTop;
 
     if (!m_settings.simpleMode)
@@ -89,20 +88,16 @@ void MonitorService::Run(MonitorSummary& summary)
         m_csv.AppendSystemSample(sample);
         summary.samples.push_back(sample);
 
-        // Processos a cada ~5s (ou se for a primeira amostra).
-        secondsSinceProcs += m_settings.intervalSeconds;
-        if (secondsSinceProcs >= 5)
+        // Processos no mesmo ritmo das metricas (intervalo configurado), para a
+        // lista de processos ficar alinhada ao segundo do pico analisado.
+        const std::vector<ProcessSample> all = m_processes.CollectAll();
+        const std::vector<ProcessSample> top = ProcessService::SelectTop(all, 5);
+        m_csv.AppendProcessSamples(top);
+        for (const auto& p : top)
         {
-            secondsSinceProcs = 0;
-            const std::vector<ProcessSample> all = m_processes.CollectAll();
-            const std::vector<ProcessSample> top = ProcessService::SelectTop(all, 5);
-            m_csv.AppendProcessSamples(top);
-            for (const auto& p : top)
-            {
-                summary.processSamples.push_back(p);
-            }
-            lastTop = top;
+            summary.processSamples.push_back(p);
         }
+        lastTop = top;
 
         // --- Tela ---
         if (m_settings.simpleMode)

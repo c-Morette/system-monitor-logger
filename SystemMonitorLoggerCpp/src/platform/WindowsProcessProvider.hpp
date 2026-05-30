@@ -4,6 +4,7 @@
 
 #include <chrono>
 #include <cstdint>
+#include <string>
 #include <unordered_map>
 
 // Coleta de processos no Windows via Toolhelp32 + GetProcessTimes +
@@ -21,4 +22,6 @@ private:
     };
 
     std::unordered_map<std::int32_t, CpuSnapshot> m_previous;
+    // Nome amigavel ja resolvido por PID (evita reler version info a cada tick).
+    std::unordered_map<std::int32_t, std::string> m_displayCache;
 };

@@ -198,14 +198,40 @@ std::vector<ProcessSample> LinuxProcessProvider::CollectAll()
             }
         }
 
+        // Nome amigavel: resolve uma vez por PID e reaproveita.
+        std::string displayName;
+        const auto cachedName = m_displayCache.find(pid);
+        if (cachedName != m_displayCache.end())
+        {
+            displayName = cachedName->second;
+        }
+        else
+        {
+            displayName = ResolveDisplayName(pid, comm);
+            m_displayCache[pid] = displayName;
+        }
+
         ProcessSample sample;
         sample.timestamp = timestamp;
         sample.processName = comm;
-        sample.displayName = ResolveDisplayName(pid, comm);
+        sample.displayName = displayName;
         sample.pid = pid;
         sample.cpuPercent = cpuPercent;
         sample.memoryMb = ReadMemoryMb(pid, pageSize);
         result.push_back(std::move(sample));
+    }
+
+    // Remove do cache de nomes os PIDs que nao existem mais.
+    for (auto it = m_displayCache.begin(); it != m_displayCache.end();)
+    {
+        if (current.count(it->first) == 0)
+        {
+            it = m_displayCache.erase(it);
+        }
+        else
+        {
+            ++it;
+        }
     }
 
     m_previous = std::move(current);
