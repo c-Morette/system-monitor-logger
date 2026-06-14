@@ -10,7 +10,8 @@ namespace
 {
     const char* kSamplesHeader =
         "timestamp,cpu_percent,memory_used_percent,memory_used_mb,memory_total_mb,"
-        "disk_usage_percent,disk_free_mb,disk_total_mb,disk_read_mb_s,disk_write_mb_s\n";
+        "disk_usage_percent,disk_free_mb,disk_total_mb,disk_read_mb_s,disk_write_mb_s,"
+        "disk_active_percent\n";
 
     const char* kProcessesHeader =
         "timestamp,process_name,display_name,pid,cpu_percent,memory_mb\n";
@@ -68,7 +69,8 @@ void CsvLogService::AppendSystemSample(const SystemSample& sample)
          << FormatNum(sample.diskFreeMb) << ','
          << FormatNum(sample.diskTotalMb) << ','
          << FormatNum(sample.diskReadMbPerSecond) << ','
-         << FormatNum(sample.diskWriteMbPerSecond) << '\n';
+         << FormatNum(sample.diskWriteMbPerSecond) << ','
+         << FormatNum(sample.diskActivePercent) << '\n';
 }
 
 void CsvLogService::AppendProcessSamples(const std::vector<ProcessSample>& samples)

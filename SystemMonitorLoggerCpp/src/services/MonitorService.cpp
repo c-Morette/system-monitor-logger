@@ -64,13 +64,14 @@ bool MonitorService::StopRequested()
     return g_stop;
 }
 
-void MonitorService::Run(MonitorSummary& summary)
+void MonitorService::Run(MonitorSummary& summary, ReportService& report, const std::string& runDirectory)
 {
     const std::time_t start = std::time(nullptr);
     const long long intervalMs = static_cast<long long>(m_settings.intervalSeconds) * 1000;
     std::vector<ProcessSample> lastTop;
+    std::time_t lastPartialReport = start;
 
-    if (!m_settings.simpleMode)
+    if (!m_settings.simpleMode && !m_settings.quietMode)
     {
         Console::Init();
     }
@@ -100,13 +101,18 @@ void MonitorService::Run(MonitorSummary& summary)
         lastTop = top;
 
         // --- Tela ---
-        if (m_settings.simpleMode)
+        if (m_settings.quietMode)
         {
-            std::printf("[%s] cpu %5.1f%%  ram %5.1f%% (%.0f/%.0f MB)  disco %5.1f%%  rd %.2f wr %.2f MB/s\n",
+            // Modo silencioso: nao desenha nada (so CSV/relatorio em disco).
+        }
+        else if (m_settings.simpleMode)
+        {
+            std::printf("[%s] cpu %5.1f%%  ram %5.1f%% (%.0f/%.0f MB)  disco %5.1f%%  rd %.2f wr %.2f MB/s  ativ %4.0f%%\n",
                         sample.timestamp.c_str(), sample.cpuPercent,
                         sample.memoryUsedPercent, sample.memoryUsedMb, sample.memoryTotalMb,
                         sample.diskUsagePercent,
-                        sample.diskReadMbPerSecond, sample.diskWriteMbPerSecond);
+                        sample.diskReadMbPerSecond, sample.diskWriteMbPerSecond,
+                        sample.diskActivePercent);
         }
         else
         {
@@ -131,6 +137,9 @@ void MonitorService::Run(MonitorSummary& summary)
             std::snprintf(buf, sizeof(buf), "I/O   leitura %.2f MB/s   escrita %.2f MB/s",
                           sample.diskReadMbPerSecond, sample.diskWriteMbPerSecond);
             lines.push_back(buf);
+            std::snprintf(buf, sizeof(buf), "Ativ. disco %.0f%% (tempo ocupado; perto de 100%% = saturado)",
+                          sample.diskActivePercent);
+            lines.push_back(buf);
             lines.push_back("");
             lines.push_back("Top processos por CPU:");
             for (const auto& p : TopByCpu(lastTop, 5))
@@ -150,6 +159,16 @@ void MonitorService::Run(MonitorSummary& summary)
             }
 
             Console::DrawFrame(lines);
+        }
+
+        // Relatorio parcial periodico: regrava report.txt para sobreviver a
+        // queda de energia/travamento em testes longos sem supervisao.
+        if (m_settings.partialReportSeconds > 0 &&
+            (now - lastPartialReport) >= m_settings.partialReportSeconds)
+        {
+            summary.finishedAt = std::time(nullptr);
+            report.Generate(summary, runDirectory);
+            lastPartialReport = now;
         }
 
         // Dorme em fatias curtas para responder ao CTRL+C rapidamente.

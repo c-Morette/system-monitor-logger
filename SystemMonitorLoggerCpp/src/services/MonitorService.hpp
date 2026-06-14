@@ -5,6 +5,9 @@
 #include "platform/MetricsProvider.hpp"
 #include "platform/ProcessProvider.hpp"
 #include "services/CsvLogService.hpp"
+#include "services/ReportService.hpp"
+
+#include <string>
 
 // Loop principal: coleta amostras no intervalo configurado, grava CSV, atualiza
 // a tela e preenche o resumo. Para quando a duracao acaba ou ao pedir parada.
@@ -16,7 +19,9 @@ public:
                    ProcessProvider& processes,
                    CsvLogService& csv);
 
-    void Run(MonitorSummary& summary);
+    // report + runDirectory permitem regravar o relatorio parcial durante a
+    // execucao (ver AppSettings::partialReportSeconds).
+    void Run(MonitorSummary& summary, ReportService& report, const std::string& runDirectory);
 
     // Sinaliza parada (chamado pelo handler de CTRL+C).
     static void RequestStop();

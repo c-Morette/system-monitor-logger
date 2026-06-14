@@ -48,12 +48,51 @@ SystemMonitorLogger [opcoes]
   --interval <n>      intervalo de coleta em segundos (padrao: 1)
   --no-smart          desativa a verificacao SMART
   --simple            saida textual simples (sem tela ao vivo)
+  --quiet             modo silencioso: nao desenha nada na tela (so grava logs)
+  --report-every <n>  regrava o relatorio a cada n minutos (padrao: 5; 0 desliga)
+  --sensitivity <p>   sensibilidade dos incidentes: baixa | normal | alta (padrao: normal)
   --help, -h          ajuda
 ```
+
+**Sensibilidade dos incidentes** (`--sensitivity`): controla o que vira "incidente" na
+linha do tempo, sem recompilar.
+
+| Preset | Tempo mínimo | CPU | RAM | Disco ativo | Quando usar |
+|--------|--------------|-----|-----|-------------|-------------|
+| `baixa` | 60s | ≥90% | ≥93% | ≥85% | só picos sérios e longos (menos ruído) |
+| `normal` | 30s | ≥85% | ≥90% | ≥80% | padrão equilibrado |
+| `alta` | 15s | ≥80% | ≥85% | ≥70% | pega até picos curtos/leves (caçar problema raro) |
 
 A tela ao vivo usa a API de console do Windows (funciona no **Win7**, que nao interpreta
 codigos ANSI) e ANSI no Linux. Cada execucao grava `samples.csv`, `processes.csv`,
 `smart.txt` e `report.txt` em `logs/<data>_<host>_PID<n>/`.
+
+### Diagnóstico desacompanhado (ex.: PDV problemático a noite)
+
+Cenário-alvo: deixar a máquina rodando a noite toda e, de manhã, ler **um relatório que conta
+a história** — sem ter ficado olhando a tela.
+
+```powershell
+# Roda 8h em modo silencioso (nada na tela), regravando o relatorio a cada 5 min:
+.\SystemMonitorLogger-win-x64.exe --duration 8h --quiet
+
+# Caçando um problema raro/intermitente? aumente a sensibilidade:
+.\SystemMonitorLogger-win-x64.exe --duration 8h --quiet --sensitivity alta
+```
+
+O `report.txt` final traz, além das médias/picos:
+
+- **Veredito no topo** — `SAUDAVEL` / `ATENCAO` / `GARGALO PROVAVEL`, em uma frase.
+- **Linha do tempo de incidentes** — cada episódio em que CPU/RAM/disco passou do limite por
+  ≥ 30s, com **horário de início/fim, duração, pico e o processo culpado naquele momento**.
+  (É o que permite descobrir "às 03h17 o processo X travou a CPU por 4 min" numa noite inteira.)
+- **Resumo por hora** — tabela hora-a-hora para localizar *quando* a máquina piorou.
+- **Tendência de RAM** — detecta memória subindo sem voltar (vazamento) e aponta o processo.
+- **% de tempo de disco ocupado** (`% Disk Time` no Windows via PDH / `%util` no Linux) — o
+  indicador que acusa **HD mecânico saturado** mesmo com pouca vazão em MB/s.
+
+O **relatório parcial** (regravado a cada `--report-every` minutos) garante que, se faltar luz
+ou a máquina travar, você ainda tem o diagnóstico da noite até o último ponto salvo.
 
 ## Estrutura
 

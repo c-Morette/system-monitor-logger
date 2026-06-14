@@ -88,6 +88,7 @@ int main(int argc, char** argv)
     summary.machineName = FileHelper::MachineName();
     summary.operatingSystem = FileHelper::OperatingSystem();
     summary.intervalSeconds = settings.intervalSeconds;
+    summary.incident = settings.incident;
     summary.startedAt = std::time(nullptr);
 
     std::printf("SystemMonitorLogger (C++)\n");
@@ -101,10 +102,10 @@ int main(int argc, char** argv)
         std::printf("  SMART: %s\n", summary.smart->status.c_str());
     }
 
-    MonitorService monitor(settings, *metrics, *processes, csv);
-    monitor.Run(summary);
-
     ReportService report;
+    MonitorService monitor(settings, *metrics, *processes, csv);
+    monitor.Run(summary, report, runDir);
+
     const std::string reportPath = report.Generate(summary, runDir);
 
     std::printf("\nEncerrado. %d amostras coletadas.\n",
