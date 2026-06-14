@@ -9,7 +9,7 @@ Ferramenta de terminal em C#/.NET para **monitorar CPU, memória, disco e proces
 
 ---
 
-## 🆕 Versão C++ (Linux 32/64 e Windows 32/64) — v2.0.0
+## 🆕 Versão C++ (Linux 32/64 e Windows 32/64) — v2.1.0
 
 A pasta [`SystemMonitorLoggerCpp/`](SystemMonitorLoggerCpp/) traz uma **reescrita completa em
 C++17**, criada para rodar em **Linux 32-bit (Lubuntu antigo)** — algo que o .NET **não** suporta —
@@ -24,6 +24,25 @@ processos e SMART), mesmos arquivos de saída.
   SMART e modo de tela — não precisa decorar comando nenhum. Com argumentos, inicia direto.
 - **Tela ao vivo** com barras de CPU/RAM/disco e top processos por CPU e por RAM, atualizando
   sem piscar (e compatível com o console do Windows 7).
+
+### 🌙 Novidades da v2.1.0 — diagnóstico desacompanhado
+
+Pensado para **deixar uma máquina problemática (ex.: PDV) rodando sozinha** e, depois, ler um
+relatório que **conta o que aconteceu** — sem precisar acompanhar a tela presencialmente:
+
+- **Linha do tempo de incidentes:** cada episódio em que CPU/RAM/disco passou do limite por
+  tempo relevante, com **horário, duração, pico e o processo culpado naquele momento**.
+- **Resumo por hora** e **detecção de vazamento de RAM** (memória que sobe sem voltar).
+- **Veredito sempre conclusivo** no topo do `report.txt` (`SAUDAVEL` / `ATENCAO` / `GARGALO`).
+- **`% de tempo de disco ocupado`** via PDH (Windows 7→11) / `%util` (Linux) — acusa **HD
+  mecânico saturado** mesmo com pouca vazão em MB/s.
+- **Modo silencioso (`--quiet`)**, **relatório parcial periódico (`--report-every`)** e
+  **sensibilidade ajustável (`--sensitivity baixa|normal|alta`)**.
+
+```bash
+# Deixa rodando 8h, sem nada na tela, e de manhã leia o report.txt:
+./SystemMonitorLogger-win-x64.exe --duration 8h --quiet
+```
 
 | Sistema | Arquivo (na release) |
 |---------|----------------------|

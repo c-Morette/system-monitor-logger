@@ -38,9 +38,10 @@ if(NOT CMAKE_SYSTEM_NAME STREQUAL "Windows")
     target_compile_definitions(SystemMonitorLogger PRIVATE _FILE_OFFSET_BITS=64)
 endif()
 
-# Bibliotecas do Windows: psapi (GetProcessMemoryInfo), version (FileVersionInfo).
+# Bibliotecas do Windows: psapi (GetProcessMemoryInfo), version (FileVersionInfo),
+# pdh (contadores de desempenho de disco - Performance Data Helper).
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    target_link_libraries(SystemMonitorLogger PRIVATE psapi version)
+    target_link_libraries(SystemMonitorLogger PRIVATE psapi version pdh)
 endif()
 
 # Linkagem 100% estatica para o binario ser autossuficiente:

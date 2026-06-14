@@ -4,7 +4,9 @@
 
 #include <chrono>
 #include <cstdint>
+#include <map>
 #include <optional>
+#include <string>
 
 // Coleta de metricas no Linux via /proc e statvfs (sem dependencias externas).
 // Equivale ao LinuxMetricsProvider.cs do projeto C#.
@@ -31,9 +33,12 @@ private:
 
     std::optional<CpuTimes> m_lastCpu;
     std::optional<DiskIoSnapshot> m_lastDiskIo;
+    // Tempo ocupado acumulado (io_ticks, em ms) por disco fisico, para calcular
+    // o %util (percentual de tempo ativo) entre amostras.
+    std::map<std::string, std::uint64_t> m_lastIoTicks;
 
     double GetCpuPercent();
     void GetMemory(double& totalMb, double& usedMb, double& usedPercent);
     void GetDisk(double& totalMb, double& freeMb, double& usedPercent);
-    void GetDiskIo(double& readMbPerSecond, double& writeMbPerSecond);
+    void GetDiskIo(double& readMbPerSecond, double& writeMbPerSecond, double& activePercent);
 };

@@ -16,4 +16,9 @@ struct SystemSample
     double diskTotalMb = 0.0;
     double diskReadMbPerSecond = 0.0;
     double diskWriteMbPerSecond = 0.0;
+    // Percentual de tempo em que o disco fisico ficou ocupado (% Disk Time no
+    // Windows / %util no Linux). E' o indicador classico de "disco saturado":
+    // perto de 100% sustentado significa que o disco e' o gargalo, mesmo com
+    // poucos MB/s (tipico de HD mecanico antigo).
+    double diskActivePercent = 0.0;
 };

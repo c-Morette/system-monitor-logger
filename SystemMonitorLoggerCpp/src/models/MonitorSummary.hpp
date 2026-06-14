@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "models/IncidentConfig.hpp"
 #include "models/ProcessSample.hpp"
 #include "models/SmartResult.hpp"
 #include "models/SystemSample.hpp"
@@ -20,4 +21,5 @@ struct MonitorSummary
     std::vector<SystemSample> samples;
     std::vector<ProcessSample> processSamples;
     std::optional<SmartResult> smart;
+    IncidentConfig incident;
 };

@@ -173,10 +173,11 @@ void LinuxMetricsProvider::GetDisk(double& totalMb, double& freeMb, double& used
     usedPercent = totalMb <= 0.0 ? 0.0 : (totalMb - freeMb) * 100.0 / totalMb;
 }
 
-void LinuxMetricsProvider::GetDiskIo(double& readMbPerSecond, double& writeMbPerSecond)
+void LinuxMetricsProvider::GetDiskIo(double& readMbPerSecond, double& writeMbPerSecond, double& activePercent)
 {
     readMbPerSecond = 0.0;
     writeMbPerSecond = 0.0;
+    activePercent = 0.0;
 
     std::ifstream diskstats("/proc/diskstats");
     if (!diskstats.is_open())
@@ -186,6 +187,8 @@ void LinuxMetricsProvider::GetDiskIo(double& readMbPerSecond, double& writeMbPer
 
     std::uint64_t readSectors = 0;
     std::uint64_t writtenSectors = 0;
+    // io_ticks (ms ocupado) por disco, para o %util desta amostra.
+    std::map<std::string, std::uint64_t> ioTicks;
     std::string line;
     while (std::getline(diskstats, line))
     {
@@ -197,11 +200,8 @@ void LinuxMetricsProvider::GetDiskIo(double& readMbPerSecond, double& writeMbPer
 
         readSectors += ParseU64(parts[5]);
         writtenSectors += ParseU64(parts[9]);
-    }
-
-    if (readSectors == 0 && writtenSectors == 0)
-    {
-        return;
+        // Campo 13 (indice 12): "ms doing I/O" = io_ticks, base do %util.
+        ioTicks[parts[2]] = ParseU64(parts[12]);
     }
 
     constexpr std::uint64_t kSectorSize = 512;
@@ -210,18 +210,33 @@ void LinuxMetricsProvider::GetDiskIo(double& readMbPerSecond, double& writeMbPer
         readSectors * kSectorSize,
         writtenSectors * kSectorSize};
 
-    if (!m_lastDiskIo)
-    {
-        m_lastDiskIo = current;
-        return;
-    }
-
-    const DiskIoSnapshot previous = *m_lastDiskIo;
+    const bool hadPrevious = m_lastDiskIo.has_value();
+    const DiskIoSnapshot previous = hadPrevious ? *m_lastDiskIo : current;
     m_lastDiskIo = current;
 
+    // %util: maior percentual entre os discos fisicos (o disco mais ocupado).
+    // util = delta(io_ticks_ms) / tempo_decorrido_ms * 100.
     const double elapsedSeconds =
         std::chrono::duration<double>(current.timestamp - previous.timestamp).count();
-    if (elapsedSeconds <= 0.0)
+    if (hadPrevious && elapsedSeconds > 0.0)
+    {
+        const double elapsedMs = elapsedSeconds * 1000.0;
+        double maxUtil = 0.0;
+        for (const auto& [name, ticks] : ioTicks)
+        {
+            const auto it = m_lastIoTicks.find(name);
+            if (it == m_lastIoTicks.end())
+            {
+                continue;
+            }
+            const std::uint64_t deltaMs = ticks >= it->second ? ticks - it->second : 0;
+            maxUtil = std::max(maxUtil, static_cast<double>(deltaMs) / elapsedMs * 100.0);
+        }
+        activePercent = std::clamp(maxUtil, 0.0, 100.0);
+    }
+    m_lastIoTicks = std::move(ioTicks);
+
+    if (!hadPrevious || elapsedSeconds <= 0.0)
     {
         return;
     }
@@ -242,7 +257,7 @@ SystemSample LinuxMetricsProvider::GetSystemSample()
     sample.cpuPercent = GetCpuPercent();
     GetMemory(sample.memoryTotalMb, sample.memoryUsedMb, sample.memoryUsedPercent);
     GetDisk(sample.diskTotalMb, sample.diskFreeMb, sample.diskUsagePercent);
-    GetDiskIo(sample.diskReadMbPerSecond, sample.diskWriteMbPerSecond);
+    GetDiskIo(sample.diskReadMbPerSecond, sample.diskWriteMbPerSecond, sample.diskActivePercent);
     return sample;
 }
 
