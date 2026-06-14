@@ -144,7 +144,12 @@ Plano completo em [`../docs/PLANO-CPP.md`](../docs/PLANO-CPP.md).
 - [x] **Fase 5** — Camada Windows real (Win32 API) — os 4 alvos funcionais nativamente
 - [x] **Fase 6** — Interface ao vivo (Win7-safe) + argumentos (`--duration/--interval/--no-smart/--simple`)
 - [x] **Fase 7** — Polimento: linkagem 100% estática (resolve glibc antiga), `README-LINUX.md`
-      _(pendente externo: testar em Lubuntu 32 / Win7 físicos e CTRL+C interativo)_
+- [x] **v2.1.0** — Disco via PDH (Win7→11) + `% Disk Time`, relatório com **linha do tempo de
+      incidentes** (horário/duração/pico/culpado), resumo por hora, vazamento de RAM, veredito
+      sempre conclusivo, `--quiet`, `--report-every`, `--sensitivity`. Publicado na release v2.1.0.
 
-> Pendência de validação: rodar `dist/SystemMonitorLogger-linux-x86` num **Lubuntu 32-bit físico**
-> e comparar CPU/RAM com o `htop` (até agora só testado no Docker).
+> **Teste pendente (segunda-feira, 2026-06-15):** validar nos PDVs reais — ver o
+> **plano de teste em [`../docs/TESTE-PDV.md`](../docs/TESTE-PDV.md)**. Pontos-chave: disco via
+> PDH no **Win7** (antes zerava), `% de tempo de disco ocupado` num **HD mecânico saturado**, e
+> o relatório de incidentes após deixar rodando desacompanhado. Também ainda falta comparar
+> `linux-x86` com `htop` num **Lubuntu 32-bit físico**.
